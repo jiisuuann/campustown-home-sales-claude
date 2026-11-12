@@ -3,147 +3,243 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Median home sale prices in 18 college towns, computed from completed sales in the College-town home sales dataset.">
-  <title>Home sale prices in college towns</title>
-  <link rel="icon" href="data:,">
-  <style>
-    :root { color-scheme: light; font-family: system-ui, sans-serif; color: #172b3a; background: #f6f8f7; }
-    * { box-sizing: border-box; }
-    body { margin: 0; }
-    main { width: min(100% - 2rem, 72rem); margin: 0 auto; padding: 3rem 0 2rem; }
-    header { max-width: 48rem; margin-bottom: 2.5rem; }
-    .eyebrow { color: #426a67; font-size: .78rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
-    h1 { margin: .55rem 0 .7rem; font-size: clamp(2rem, 5vw, 3.6rem); line-height: 1.05; letter-spacing: -.04em; }
-    header p { color: #52636c; font-size: 1.1rem; }
-    section { margin: 2rem 0 3rem; }
-    h2 { margin-bottom: .35rem; font-size: 1.45rem; }
-    .note { margin-top: 0; color: #596a70; }
-    .chart-wrap { overflow-x: auto; border: 1px solid #dce4e1; border-radius: .8rem; background: white; padding: 1rem; }
-    svg { display: block; width: 100%; min-width: 650px; height: auto; }
-    .grid-line { stroke: #e7ecea; stroke-width: 1; }
-    .axis-label { fill: #68777a; font-size: 12px; }
-    .city-label { fill: #253a43; font-size: 13px; }
-    .bar { fill: #34796f; }
-    .bar-value { fill: #193b3a; font-size: 12px; font-weight: 700; }
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; background: white; }
-    th, td { padding: .8rem 1rem; border-bottom: 1px solid #e0e7e4; text-align: left; }
-    th { color: #475a60; font-size: .82rem; letter-spacing: .04em; text-transform: uppercase; }
-    td.price, th.price { text-align: right; font-variant-numeric: tabular-nums; }
-    tbody tr:last-child td { border-bottom: 0; }
-    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #dce4e1; color: #5c6c70; font-size: .88rem; }
-    .status { padding: 1rem; color: #52636c; }
-    @media (max-width: 600px) { main { padding-top: 2rem; } th, td { padding: .7rem .65rem; } }
-  </style>
+  <meta name="description" content="Interactive dashboard of 35,442 home sales in 18 U.S. college towns: a map, price distributions and nine analysis questions, computed in the browser from the College-town home sales dataset.">
+  <title>College-Town Home Sales</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1 1 7h2v8h4v-5h2v5h4V7h2z' fill='%232a78d6'/%3E%3C/svg%3E">
+  <script>
+    // Apply the saved theme before the page paints, so there is no flash.
+    try { const t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <main>
-    <header>
-      <div class="eyebrow">College-town housing</div>
-      <h1>What homes sell for near campus</h1>
-      <p>Median sale price across 18 college towns. Each town’s chart value and table value are rounded to the nearest whole dollar.</p>
-    </header>
+  <header class="topbar">
+    <a class="brand" href="#top">College-Town Home Sales <span>· Part 2</span></a>
+    <nav class="topnav" aria-label="Sections">
+      <a href="#geo">Map</a><a href="#overview">Overview</a>
+      <a href="#q1">Q1</a><a href="#q2">Q2</a><a href="#q3">Q3</a><a href="#q4">Q4</a><a href="#q5">Q5</a>
+      <a href="#q6">Q6</a><a href="#q7">Q7</a><a href="#q8">Q8</a><a href="#q9">Q9</a><a href="#notes">Data notes</a>
+    </nav>
+    <button class="icon-btn" id="theme-toggle" type="button" aria-label="Switch to dark theme">
+      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg><span id="theme-text">Dark</span>
+    </button>
+  </header>
 
-    <section aria-labelledby="chart-title">
-      <h2 id="chart-title">Median sale price by town</h2>
-      <p class="note">Towns are ordered from highest to lowest median.</p>
-      <div class="chart-wrap"><div id="chart" class="status" role="status">Loading sale data…</div></div>
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <span class="kicker">Home sales near 11 university campuses · 2023–2026</span>
+      <h1 id="hero-title">What homes sell for in America's college towns</h1>
+      <p id="hero-text">Loading the dataset…</p>
     </section>
 
-    <section aria-labelledby="table-title">
-      <h2 id="table-title">All town medians</h2>
-      <p class="note">Median of completed sales priced at $1,000 or more. Dollar values are rounded to whole dollars.</p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th scope="col">Rank</th><th scope="col">Town</th><th scope="col" class="price">Median sale price</th><th scope="col" class="price">Sales used</th></tr></thead>
-          <tbody id="town-rows"><tr><td colspan="4" class="status">Loading sale data…</td></tr></tbody>
-        </table>
+    <!-- 1. Geographic dashboard -->
+    <section class="slide" id="geo" aria-labelledby="geo-title">
+      <div class="slide-head">
+        <div>
+          <span class="kicker">Geographic dashboard</span>
+          <h2 id="geo-title">Pick a town or campus on the map</h2>
+          <p class="lede">Click a marker or use the menus. The map highlights the state, zooms to the town or campus area and shows each sale as a dot shaded by price. Everything in this section and the next follows the selection.</p>
+        </div>
+      </div>
+      <div class="geo-grid">
+        <div class="card map-card">
+          <div class="map-toolbar filters" role="group" aria-label="Map selection">
+            <div class="field"><label for="sel-uni">University / campus area</label><select id="sel-uni"></select></div>
+            <div class="field"><label for="sel-city">City</label><select id="sel-city"></select></div>
+            <button class="icon-btn reset" id="map-reset" type="button">↺ National view</button>
+          </div>
+          <div class="map-wrap">
+            <svg id="map" role="img" aria-labelledby="map-desc"><desc id="map-desc">Map of the United States with markers for the 18 college towns in the dataset.</desc></svg>
+            <div class="map-zoom">
+              <button class="icon-btn" id="zoom-in" type="button" aria-label="Zoom in">+</button>
+              <button class="icon-btn" id="zoom-out" type="button" aria-label="Zoom out">−</button>
+            </div>
+          </div>
+          <div class="map-caption"><span id="map-status">National view · marker size = number of sales</span><span id="map-legend"></span></div>
+        </div>
+        <div class="side-stack">
+          <div class="card">
+            <span class="kicker" id="sel-kicker">Selection</span>
+            <div class="selection-title" id="sel-title">All 18 college towns</div>
+            <p class="sub" id="sel-sub"></p>
+            <div class="kpis" id="sel-kpis"></div>
+          </div>
+          <div class="card">
+            <h3>Median sale price by city</h3>
+            <p class="sub">Click a bar to select that city. The selection is highlighted.</p>
+            <div class="chart" id="city-chart"></div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <footer>
-      <p>Source: College-town home sales dataset, version 1.0 (2026). Data collected March 2026. Medians exclude sales below $1,000 because the data description identifies implausible low values.</p>
-    </footer>
+    <!-- 2. Basic dashboard -->
+    <section class="slide" id="overview" aria-labelledby="ov-title">
+      <div class="slide-head">
+        <div>
+          <span class="kicker">Basic dashboard</span>
+          <h2 id="ov-title">How prices are spread out</h2>
+          <p class="lede" id="ov-lede">Distribution of sale prices for the current map selection.</p>
+        </div>
+        <div class="filters" role="group" aria-label="Distribution options">
+          <div class="field"><label for="ov-bin">Bin width</label>
+            <select id="ov-bin"><option value="25000">$25,000</option><option value="50000" selected>$50,000</option><option value="100000">$100,000</option></select></div>
+          <div class="field"><label for="ov-cap">Show prices up to</label>
+            <select id="ov-cap"><option value="1000000">$1,000,000</option><option value="1500000" selected>$1,500,000</option><option value="2500000">$2,500,000</option></select></div>
+          <button class="icon-btn" id="ov-reset" type="button">↺ Reset</button>
+        </div>
+      </div>
+      <div class="q-body card" style="padding:1.15rem">
+        <div>
+          <div class="answer" aria-live="polite"><div class="big" id="ov-big"></div><p class="say" id="ov-say"></p></div>
+          <div class="chart" id="ov-chart"></div>
+          <p class="note">The last bar collects every sale above the chosen limit. Dashed line: median.</p>
+        </div>
+        <div><div class="table-wrap"><table id="ov-table"></table></div></div>
+      </div>
+    </section>
+
+    <!-- 3. Analysis questions -->
+    <section class="slide" id="questions" aria-labelledby="qs-title">
+      <div class="slide-head"><div>
+        <span class="kicker">Analysis questions</span>
+        <h2 id="qs-title">Nine questions, each with its own filters</h2>
+        <p class="lede">Filters in a question change only that question. Each has its own reset button.</p>
+      </div></div>
+      <div class="q-grid">
+
+        <article class="card q-card" id="q1" aria-labelledby="q1-t">
+          <div style="padding:1.15rem 1.15rem .8rem"><span class="kicker">Q1 · Budget</span><h3 id="q1-t">Which cities have the most sales within my budget?</h3></div>
+          <div class="filters" role="group" aria-label="Q1 filters">
+            <div class="field"><label for="q1-min">Minimum price ($)</label><input id="q1-min" type="number" min="0" step="25000" inputmode="numeric"></div>
+            <div class="field"><label for="q1-max">Maximum price ($)</label><input id="q1-max" type="number" min="0" step="25000" inputmode="numeric"></div>
+            <div class="field"><span class="flabel" id="q1-rank-l">Rank by</span><div class="seg" role="group" aria-labelledby="q1-rank-l" id="q1-rank"><button type="button" data-v="count" aria-pressed="true">Sales count</button><button type="button" data-v="share" aria-pressed="false">Share</button></div></div>
+            <button class="icon-btn reset" type="button" data-reset="q1">↺ Reset Q1</button>
+          </div>
+          <div class="q-body"><div><div class="answer" aria-live="polite"><div class="big" id="q1-big"></div><p class="say" id="q1-say"></p></div><div class="chart" id="q1-chart"></div></div>
+            <div><div class="table-wrap"><table id="q1-table"></table></div><p class="note">Share = sales in the budget ÷ all of the city's sales.</p></div></div>
+        </article>
+
+        <article class="card q-card" id="q2" aria-labelledby="q2-t">
+          <div style="padding:1.15rem 1.15rem .8rem"><span class="kicker">Q2 · Distance to campus</span><h3 id="q2-t">How does the median price change with distance from campus?</h3></div>
+          <div class="filters" role="group" aria-label="Q2 filters">
+            <div class="field"><label for="q2-uni">University</label><select id="q2-uni"></select></div>
+            <button class="icon-btn reset" type="button" data-reset="q2">↺ Reset Q2</button>
+          </div>
+          <div class="q-body"><div><div class="answer" aria-live="polite"><div class="big" id="q2-big"></div><p class="say" id="q2-say"></p></div><div class="chart" id="q2-chart"></div></div>
+            <div><div class="table-wrap"><table id="q2-table"></table></div><p class="note">Distance is the dataset's straight-line miles to the campus landmark. Bands with fewer than 10 sales are shown faded.</p></div></div>
+        </article>
+
+        <article class="card q-card" id="q3" aria-labelledby="q3-t">
+          <div style="padding:1.15rem 1.15rem .8rem"><span class="kicker">Q3 · Bedrooms</span><h3 id="q3-t">Which city is cheapest for a given number of bedrooms?</h3></div>
+          <div class="filters" role="group" aria-label="Q3 filters">
+            <div class="field"><label for="q3-beds">Bedrooms</label><select id="q3-beds"></select></div>
+            <div class="field"><label for="q3-minn">Minimum sales per city</label><select id="q3-minn"><option>1</option><option>5</option><option selected>10</option><option>20</option><option>50</option></select></div>
+            <button class="icon-btn reset" type="button" data-reset="q3">↺ Reset Q3</button>
+          </div>
+          <div class="q-body"><div><div class="answer" aria-live="polite"><div class="big" id="q3-big"></div><p class="say" id="q3-say"></p></div><div class="chart" id="q3-chart"></div></div>
+            <div><div class="table-wrap"><table id="q3-table"></table></div><p class="note">Cities with fewer sales than the minimum are listed in the table but not ranked.</p></div></div>
+        </article>
+
+        <article class="card q-card" id="q4" aria-labelledby="q4-t">
+          <div style="padding:1.15rem 1.15rem .8rem"><span class="kicker">Q4 · Price per square foot</span><h3 id="q4-t">Which cities cost the most per square foot?</h3></div>
+          <div class="filters" role="group" aria-label="Q4 filters">
+            <div class="field"><label for="q4-min">Minimum living area (sq ft)</label><input id="q4-min" type="number" min="0" step="250" inputmode="numeric"></div>
+            <div class="field"><label for="q4-minn">Minimum sales per city</label><select id="q4-minn"><option>1</option><option>5</option><option selected>10</option><option>20</option><option>50</option></select></div>
+            <button class="icon-btn reset" type="button" data-reset="q4">↺ Reset Q4</button>
+          </div>
+          <div class="q-body"><div><div class="answer" aria-live="polite"><div class="big" id="q4-big"></div><p class="say" id="q4-say"></p></div><div class="chart" id="q4-chart"></div></div>
+            <div><div class="table-wrap"><table id="q4-table"></table></div><p class="note">Price per sq ft is computed for each sale (price ÷ living area), then the median is taken per city. Sales with no living area or 0 sq ft are left out.</p></div></div>
+        </article>
+
+        <article class="card q-card" id="q5" aria-labelledby="q5-t">
+          <div style="padding:1.15rem 1.15rem .8rem"><span class="kicker">Q5 · Trends</span><h3 id="q5-t">How has the median price moved over time?</h3></div>
+          <div class="filters" role="group" aria-label="Q5 filters">
+            <div class="field"><label for="q5-city">City</label><select id="q5-city"></select></div>
+            <div class="field"><span class="flabel" id="q5-g-l">Period</span><div class="seg" role="group" aria-labelledby="q5-g-l" id="q5-g"><button type="button" data-v="year" aria-pressed="false">Year</button><button type="button" data-v="quarter" aria-pressed="true">Quarter</button></div></div>
+            <button class="icon-btn reset" type="button" data-reset="q5">↺ Reset Q5</button>
+          </div>
+          <div class="q-body"><div><div class="answer" aria-live="polite"><div class="big" id="q5-big"></div><p class="say" id="q5-say"></p></div><div class="chart" id="q5-chart"></div></div>
+            <div><div class="table-wrap"><table id="q5-table"></table></div><p class="note" id="q5-note"></p></div></div>
+        </article>
+
+        <article class="card q-card" id="q6" aria-labelledby="q6-t">
+          <div style="padding:1.15rem 1.15rem .8rem"><span class="kicker">Q6 · Mean vs. median</span><h3 id="q6-t">How far apart are the mean and median sale prices?</h3></div>
+          <div class="filters" role="group" aria-label="Q6 filters">
+            <div class="field"><label for="q6-city">City</label><select id="q6-city"></select></div>
+            <div class="field"><label for="q6-min">Minimum price ($)</label><input id="q6-min" type="number" min="0" step="25000" inputmode="numeric"></div>
+            <div class="field"><label for="q6-max">Maximum price ($)</label><input id="q6-max" type="number" min="0" step="25000" inputmode="numeric"></div>
+            <button class="icon-btn reset" type="button" data-reset="q6">↺ Reset Q6</button>
+          </div>
+          <div class="q-body"><div><div class="answer" aria-live="polite"><div class="big" id="q6-big"></div><p class="say" id="q6-say"></p></div><div class="legend" id="q6-legend"></div><div class="chart" id="q6-chart"></div></div>
+            <div><div class="table-wrap"><table id="q6-table"></table></div><p class="note">A mean above the median means a few expensive sales pull the average up (a right-skewed distribution).</p></div></div>
+        </article>
+
+        <article class="card q-card" id="q7" aria-labelledby="q7-t">
+          <div style="padding:1.15rem 1.15rem .8rem"><span class="kicker">Q7 · Features</span><h3 id="q7-t">Do homes with a garage, basement or fireplace sell for more?</h3></div>
+          <div class="filters" role="group" aria-label="Q7 filters">
+            <div class="field"><label for="q7-feat">Feature</label><select id="q7-feat"><option value="garage">Garage</option><option value="basement">Basement</option><option value="fireplace">Fireplace</option></select></div>
+            <div class="field"><label for="q7-city">City</label><select id="q7-city"></select></div>
+            <button class="icon-btn reset" type="button" data-reset="q7">↺ Reset Q7</button>
+          </div>
+          <div class="q-body"><div><div class="answer" aria-live="polite"><div class="big" id="q7-big"></div><p class="say" id="q7-say"></p></div><div class="legend" id="q7-legend"></div><div class="chart" id="q7-chart"></div></div>
+            <div><div class="table-wrap"><table id="q7-table"></table></div><p class="note" id="q7-note"></p></div></div>
+        </article>
+
+        <article class="card q-card" id="q8" aria-labelledby="q8-t">
+          <div style="padding:1.15rem 1.15rem .8rem"><span class="kicker">Q8 · Construction year</span><h3 id="q8-t">For homes of similar size, do newer homes cost more?</h3></div>
+          <div class="filters" role="group" aria-label="Q8 filters">
+            <div class="field"><label for="q8-min">Living area from (sq ft)</label><input id="q8-min" type="number" min="0" step="250" inputmode="numeric"></div>
+            <div class="field"><label for="q8-max">Living area to (sq ft)</label><input id="q8-max" type="number" min="0" step="250" inputmode="numeric"></div>
+            <div class="field"><label for="q8-city">City</label><select id="q8-city"></select></div>
+            <button class="icon-btn reset" type="button" data-reset="q8">↺ Reset Q8</button>
+          </div>
+          <div class="q-body"><div><div class="answer" aria-live="polite"><div class="big" id="q8-big"></div><p class="say" id="q8-say"></p></div><div class="chart" id="q8-chart"></div></div>
+            <div><div class="table-wrap"><table id="q8-table"></table></div><p class="note">Groups with fewer than 10 sales are shown faded and are not used for the answer.</p></div></div>
+        </article>
+
+        <article class="card q-card" id="q9" aria-labelledby="q9-t">
+          <div style="padding:1.15rem 1.15rem .8rem"><span class="kicker">Q9 · Seasonality</span><h3 id="q9-t">Which month had the most sales?</h3></div>
+          <div class="filters" role="group" aria-label="Q9 filters">
+            <div class="field"><label for="q9-city">City</label><select id="q9-city"></select></div>
+            <div class="field"><label for="q9-year">Year</label><select id="q9-year"></select></div>
+            <button class="icon-btn reset" type="button" data-reset="q9">↺ Reset Q9</button>
+          </div>
+          <div class="q-body"><div><div class="answer" aria-live="polite"><div class="big" id="q9-big"></div><p class="say" id="q9-say"></p></div><div class="chart" id="q9-chart"></div></div>
+            <div><div class="table-wrap"><table id="q9-table"></table></div><p class="note" id="q9-note"></p></div></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="slide" id="notes" aria-labelledby="notes-title">
+      <div class="slide-head"><div><span class="kicker">Method</span><h2 id="notes-title">Data notes</h2></div></div>
+      <div class="notes-grid">
+        <div class="card"><h3>Which sales are used</h3><ul id="notes-rule"></ul></div>
+        <div class="card"><h3>How figures are defined</h3><ul>
+          <li>Median: the middle sale price (average of the two middle values when the count is even), rounded to whole dollars.</li>
+          <li>Sale month, quarter and year come from <code>sale_date</code> (closing date). Sales with no sale date are left out of Q5 and Q9.</li>
+          <li>Price per sq ft is computed per sale, then the median is taken.</li>
+          <li>Q7 compares homes with the feature against homes without it. Blank (not reported) basement and fireplace values are counted separately, never treated as "no".</li>
+          <li>Map dots use each sale's own coordinates. Town markers sit at the median coordinates of that town's sales.</li>
+        </ul></div>
+        <div class="card"><h3>Caveats</h3><ul>
+          <li><code>home_type</code> is unreliable, so no figure depends on it.</li>
+          <li>Rows that share a street address are separate sales and are all kept.</li>
+          <li>The data covers sales closed between <span id="notes-dates"></span>, so the first and last years and quarters are partial.</li>
+          <li>Values are as reported by one listing source in March 2026, not verified against county records.</li>
+        </ul></div>
+      </div>
+    </section>
   </main>
-  <script>
-    const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
-    function parseCSV(text) {
-      const rows = [];
-      let row = [], field = "", quoted = false;
-      for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        if (quoted) {
-          if (char === '"' && text[i + 1] === '"') { field += '"'; i++; }
-          else if (char === '"') quoted = false;
-          else field += char;
-        } else if (char === '"') quoted = true;
-        else if (char === ",") { row.push(field); field = ""; }
-        else if (char === "\n") { row.push(field.replace(/\r$/, "")); rows.push(row); row = []; field = ""; }
-        else field += char;
-      }
-      if (field.length || row.length) { row.push(field.replace(/\r$/, "")); rows.push(row); }
-      const headers = rows.shift();
-      return rows.filter(values => values.length === headers.length).map(values => Object.fromEntries(headers.map((key, i) => [key, values[i]])));
-    }
+  <footer>
+    <p>Source: College-town home sales dataset, version 1.0 (2026). University of Illinois-Deloitte Foundation Center for Business Emerging Technologies. Data collected March 2026. Every number on this page is computed in your browser from <code>data/dashboard_sales.json</code>, a column subset of <code>data/college_town_home_sales.csv</code> made by <code>scripts/build_dashboard_data.py</code>. Map: U.S. Census Bureau state boundaries via us-atlas. Charts: D3.</p>
+  </footer>
 
-    function median(sorted) {
-      const middle = Math.floor(sorted.length / 2);
-      return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
-    }
+  <div class="tooltip" id="tooltip" role="tooltip"></div>
 
-    function buildChart(towns) {
-      const width = 1050, left = 205, right = 112, top = 16, rowHeight = 30;
-      const plotWidth = width - left - right;
-      const height = top + towns.length * rowHeight + 42;
-      const max = Math.ceil(towns[0].median / 100000) * 100000;
-      const ticks = 5;
-      const parts = [`<svg viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="svg-title svg-desc" xmlns="http://www.w3.org/2000/svg"><title id="svg-title">Median home sale prices in 18 college towns</title><desc id="svg-desc">Horizontal bars ordered from highest to lowest median sale price. Each bar is labeled with its rounded dollar value.</desc>`];
-      for (let i = 0; i <= ticks; i++) {
-        const value = max * i / ticks, x = left + plotWidth * i / ticks;
-        parts.push(`<line class="grid-line" x1="${x}" y1="${top}" x2="${x}" y2="${top + towns.length * rowHeight}"/>`);
-        parts.push(`<text class="axis-label" x="${x}" y="${height - 8}" text-anchor="middle">${money.format(Math.round(value))}</text>`);
-      }
-      towns.forEach((town, i) => {
-        const y = top + i * rowHeight + 5;
-        const label = `${town.city}, ${town.state}`;
-        const barWidth = plotWidth * town.median / max;
-        parts.push(`<text class="city-label" x="${left - 12}" y="${y + 14}" text-anchor="end">${label}</text>`);
-        parts.push(`<rect class="bar" x="${left}" y="${y}" width="${barWidth}" height="18" rx="3"/>`);
-        parts.push(`<text class="bar-value" x="${left + barWidth + 7}" y="${y + 14}">${money.format(Math.round(town.median))}</text>`);
-      });
-      parts.push("</svg>");
-      return parts.join("");
-    }
-
-    async function render() {
-      const chart = document.getElementById("chart");
-      const tbody = document.getElementById("town-rows");
-      try {
-        const response = await fetch("data/college_town_home_sales.csv");
-        if (!response.ok) throw new Error(`Could not load sale data (${response.status}).`);
-        const rows = parseCSV(await response.text());
-        const byTown = new Map();
-        for (const row of rows) {
-          const price = Number(row.sale_price);
-          if (!Number.isFinite(price) || price < 1000) continue;
-          const key = `${row.city}\u0000${row.state}`;
-          if (!byTown.has(key)) byTown.set(key, { city: row.city, state: row.state, prices: [] });
-          byTown.get(key).prices.push(price);
-        }
-        const towns = [...byTown.values()].map(town => {
-          town.prices.sort((a, b) => a - b);
-          return { city: town.city, state: town.state, count: town.prices.length, median: median(town.prices) };
-        }).sort((a, b) => b.median - a.median || a.city.localeCompare(b.city));
-        chart.className = "";
-        chart.innerHTML = buildChart(towns);
-        tbody.innerHTML = towns.map((town, i) => `<tr><td>${i + 1}</td><td>${town.city}, ${town.state}</td><td class="price">${money.format(Math.round(town.median))}</td><td class="price">${town.count.toLocaleString("en-US")}</td></tr>`).join("");
-      } catch (error) {
-        chart.textContent = error.message;
-        tbody.innerHTML = `<tr><td colspan="4" class="status">${error.message}</td></tr>`;
-      }
-    }
-    render();
-  </script>
+  <script src="vendor/d3-7.9.0.min.js"></script>
+  <script src="vendor/topojson-client-3.1.0.min.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
